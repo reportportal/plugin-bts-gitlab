@@ -1,0 +1,17 @@
+{
+  "scope": "GitLab",
+  "extensions": [
+    {
+      "name": "integrationFormFields",
+      "type": "uiExtension:integrationFormFields",
+      "title": "GitLab plugin fields",
+      "moduleName": "./integrationFormFields"
+    },
+    {
+      "name": "integrationSettings",
+      "type": "uiExtension:integrationSettings",
+      "title": "GitLab plugin settings",
+      "moduleName": "./integrationSettings"
+    }
+  ]
+}
