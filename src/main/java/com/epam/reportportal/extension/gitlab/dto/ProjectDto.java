@@ -15,9 +15,14 @@
  */
 package com.epam.reportportal.extension.gitlab.dto;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * @author <a href="mailto:pavel_bortnik@epam.com">Pavel Bortnik</a>
  */
+@Setter
+@Getter
 public class ProjectDto {
 
   private Long id;
@@ -27,19 +32,4 @@ public class ProjectDto {
   public ProjectDto() {
   }
 
-  public Long getId() {
-    return id;
-  }
-
-  public void setId(Long id) {
-    this.id = id;
-  }
-
-  public NamespaceDto getNamespace() {
-    return namespace;
-  }
-
-  public void setNamespace(NamespaceDto namespace) {
-    this.namespace = namespace;
-  }
 }

@@ -1,14 +1,12 @@
 package com.epam.reportportal.extension.gitlab.dto;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Setter
+@Getter
 public class UploadsLinkDto {
 
   private String markdown;
 
-  public void setMarkdown(String markdown) {
-    this.markdown = markdown;
-  }
-
-  public String getMarkdown() {
-    return markdown;
-  }
 }
