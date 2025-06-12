@@ -17,6 +17,7 @@ package com.epam.reportportal.extension.gitlab.command;
 
 import com.epam.reportportal.extension.ProjectMemberCommand;
 import com.epam.ta.reportportal.dao.ProjectRepository;
+import com.epam.ta.reportportal.dao.organization.OrganizationRepositoryCustom;
 import com.epam.ta.reportportal.entity.integration.Integration;
 import java.util.List;
 import java.util.Map;
@@ -29,8 +30,8 @@ public class GetIssueTypesCommand extends ProjectMemberCommand<List<String>> {
   public static final String ISSUE = "Issue";
   public static final String INCIDENT = "Incident";
 
-  public GetIssueTypesCommand(ProjectRepository projectRepository) {
-    super(projectRepository);
+  public GetIssueTypesCommand(ProjectRepository projectRepository, OrganizationRepositoryCustom organizationRepository) {
+    super(projectRepository, organizationRepository);
   }
 
   @Override

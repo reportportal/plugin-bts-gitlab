@@ -36,6 +36,7 @@ import com.epam.ta.reportportal.dao.LaunchRepository;
 import com.epam.ta.reportportal.dao.LogRepository;
 import com.epam.ta.reportportal.dao.ProjectRepository;
 import com.epam.ta.reportportal.dao.TestItemRepository;
+import com.epam.ta.reportportal.dao.organization.OrganizationRepositoryCustom;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -77,6 +78,10 @@ public class GitlabExtension implements ReportPortalExtensionPoint, DisposableBe
   private IntegrationRepository integrationRepository;
   @Autowired
   private ProjectRepository projectRepository;
+
+  @Autowired
+  private OrganizationRepositoryCustom organizationRepository;
+
   private final Supplier<Map<String, PluginCommand<?>>> pluginCommandMapping = new MemoizingSupplier<>(
       this::getCommands);
   @Autowired
@@ -182,10 +187,10 @@ public class GitlabExtension implements ReportPortalExtensionPoint, DisposableBe
     commands.add(new SearchMilestonesCommand(gitlabClientProviderSupplier.get()));
     commands.add(new SearchEpicsCommand(gitlabClientProviderSupplier.get()));
     commands.add(new SearchLabelsCommand(gitlabClientProviderSupplier.get()));
-    commands.add(new GetIssueTypesCommand(projectRepository));
-    commands.add(new GetIssueFieldsCommand(projectRepository));
+    commands.add(new GetIssueTypesCommand(projectRepository, organizationRepository));
+    commands.add(new GetIssueFieldsCommand(projectRepository, organizationRepository));
     commands.add(new PostTicketCommand(projectRepository, gitlabClientProviderSupplier.get(),
-        requestEntityConverter, descriptionBuilderServiceSupplier.get()));
+        requestEntityConverter, descriptionBuilderServiceSupplier.get(), organizationRepository));
     return commands.stream().collect(Collectors.toMap(NamedPluginCommand::getName, it -> it));
   }
 }

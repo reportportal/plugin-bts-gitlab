@@ -35,6 +35,7 @@ import com.epam.reportportal.model.externalsystem.PostFormField;
 import com.epam.reportportal.model.externalsystem.PostTicketRQ;
 import com.epam.reportportal.model.externalsystem.Ticket;
 import com.epam.ta.reportportal.dao.ProjectRepository;
+import com.epam.ta.reportportal.dao.organization.OrganizationRepositoryCustom;
 import com.epam.ta.reportportal.entity.integration.Integration;
 import com.epam.reportportal.rules.exception.ReportPortalException;
 import com.epam.reportportal.rules.exception.ErrorType;
@@ -56,8 +57,8 @@ public class PostTicketCommand extends ProjectMemberCommand<Ticket> {
 
   public PostTicketCommand(ProjectRepository projectRepository,
       GitlabClientProvider gitlabClientProvider, RequestEntityConverter requestEntityConverter,
-      DescriptionBuilderService descriptionBuilderService) {
-    super(projectRepository);
+      DescriptionBuilderService descriptionBuilderService, OrganizationRepositoryCustom organizationRepository) {
+    super(projectRepository, organizationRepository);
     this.gitlabClientProvider = gitlabClientProvider;
     this.requestEntityConverter = requestEntityConverter;
     this.descriptionBuilderService = descriptionBuilderService;

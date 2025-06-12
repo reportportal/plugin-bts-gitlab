@@ -24,6 +24,7 @@ import com.epam.reportportal.extension.ProjectMemberCommand;
 import com.epam.reportportal.model.externalsystem.AllowedValue;
 import com.epam.reportportal.model.externalsystem.PostFormField;
 import com.epam.ta.reportportal.dao.ProjectRepository;
+import com.epam.ta.reportportal.dao.organization.OrganizationRepositoryCustom;
 import com.epam.ta.reportportal.entity.integration.Integration;
 import com.epam.reportportal.rules.exception.ReportPortalException;
 import com.epam.reportportal.rules.exception.ErrorType;
@@ -46,8 +47,8 @@ public class GetIssueFieldsCommand extends ProjectMemberCommand<List<PostFormFie
   private static final String ASSIGNEE_DESCRIPTION =
       "Note that the free version of GitLab allows only one assignee";
 
-  public GetIssueFieldsCommand(ProjectRepository projectRepository) {
-    super(projectRepository);
+  public GetIssueFieldsCommand(ProjectRepository projectRepository, OrganizationRepositoryCustom organizationRepository) {
+    super(projectRepository, organizationRepository);
   }
 
   @Override
