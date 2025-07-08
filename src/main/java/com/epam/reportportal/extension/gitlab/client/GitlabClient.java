@@ -9,8 +9,9 @@ import com.epam.reportportal.extension.gitlab.dto.ProjectDto;
 import com.epam.reportportal.extension.gitlab.dto.UploadsLinkDto;
 import com.epam.reportportal.extension.gitlab.dto.UserDto;
 import com.epam.reportportal.extension.gitlab.utils.GitlabObjectMapperProvider;
-import com.epam.ta.reportportal.entity.attachment.Attachment;
+import com.epam.reportportal.rules.exception.ErrorType;
 import com.epam.reportportal.rules.exception.ReportPortalException;
+import com.epam.ta.reportportal.entity.attachment.Attachment;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
@@ -202,7 +203,7 @@ public class GitlabClient {
     try {
       byteArray = inputStream.readAllBytes();
     } catch (IOException e) {
-      throw new ReportPortalException(e.getMessage());
+      throw new ReportPortalException(ErrorType.INCORRECT_AUTHENTICATION_TYPE);
     }
     MultiValueMap<String, String> fileMap = new LinkedMultiValueMap<>();
 
@@ -229,7 +230,7 @@ public class GitlabClient {
           UploadsLinkDto.class);
       return response.getBody();
     } catch (Exception e) {
-      throw new ReportPortalException(e.getMessage());
+      throw new ReportPortalException(ErrorType.UNABLE_INTERACT_WITH_INTEGRATION, "Failed to upload the file");
     }
   }
 
