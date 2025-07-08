@@ -203,7 +203,7 @@ public class GitlabClient {
     try {
       byteArray = inputStream.readAllBytes();
     } catch (IOException e) {
-      throw new ReportPortalException(ErrorType.INCORRECT_AUTHENTICATION_TYPE);
+      throw new ReportPortalException(e.getMessage());
     }
     MultiValueMap<String, String> fileMap = new LinkedMultiValueMap<>();
 
