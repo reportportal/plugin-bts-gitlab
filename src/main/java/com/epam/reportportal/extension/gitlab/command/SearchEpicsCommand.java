@@ -68,8 +68,8 @@ public class SearchEpicsCommand implements PluginCommand<List<EpicDto>> {
           gitlabClientProvider.get(integrationParams).getProject(project).getNamespace().getId();
       return gitlabClientProvider.get(integrationParams).searchEpics(groupId, term);
     } catch (Exception e) {
-      LOGGER.error("Issues not found: " + e.getMessage(), e);
-      throw new ReportPortalException(ErrorType.BAD_REQUEST_ERROR, e.getMessage());
+      LOGGER.error("Issues not found: {}", e.getMessage(), e);
+      throw new ReportPortalException(ErrorType.UNABLE_INTERACT_WITH_INTEGRATION, "Failed to retrieve Gitlab epics");
     }
   }
 

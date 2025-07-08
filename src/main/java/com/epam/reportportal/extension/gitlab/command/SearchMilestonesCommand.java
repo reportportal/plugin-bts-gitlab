@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
  * @author <a href="mailto:pavel_bortnik@epam.com">Pavel Bortnik</a>
  */
 public class SearchMilestonesCommand implements PluginCommand<List<MilestoneDto>> {
+
   private static final Logger LOGGER = LoggerFactory.getLogger(SearchMilestonesCommand.class);
 
   private final GitlabClientProvider gitlabClientProvider;
@@ -66,8 +67,9 @@ public class SearchMilestonesCommand implements PluginCommand<List<MilestoneDto>
     try {
       return gitlabClientProvider.get(integrationParams).searchMilestones(project, term);
     } catch (Exception e) {
-      LOGGER.error("Issues not found: " + e.getMessage(), e);
-      throw new ReportPortalException(ErrorType.BAD_REQUEST_ERROR, e.getMessage());
+      LOGGER.error("Issues not found: {}", e.getMessage(), e);
+      throw new ReportPortalException(ErrorType.UNABLE_INTERACT_WITH_INTEGRATION,
+          "Failed to retrieve the Gitlab milestones");
     }
   }
 

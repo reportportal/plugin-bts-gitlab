@@ -66,8 +66,9 @@ public class SearchUsersCommand implements PluginCommand<List<UserDto>> {
     try {
       return gitlabClientProvider.get(integrationParams).searchUsers(project, term);
     } catch (Exception e) {
-      LOGGER.error("Issues not found: " + e.getMessage(), e);
-      throw new ReportPortalException(ErrorType.BAD_REQUEST_ERROR, e.getMessage());
+      LOGGER.error("Issues not found: {}", e.getMessage(), e);
+      throw new ReportPortalException(ErrorType.UNABLE_INTERACT_WITH_INTEGRATION,
+          "Failed to retrieve the list of Gitlab users");
     }
   }
 }

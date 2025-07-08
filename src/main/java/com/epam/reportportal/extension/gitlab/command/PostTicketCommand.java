@@ -34,10 +34,10 @@ import com.epam.reportportal.extension.util.RequestEntityValidator;
 import com.epam.reportportal.model.externalsystem.PostFormField;
 import com.epam.reportportal.model.externalsystem.PostTicketRQ;
 import com.epam.reportportal.model.externalsystem.Ticket;
+import com.epam.reportportal.rules.exception.ErrorType;
+import com.epam.reportportal.rules.exception.ReportPortalException;
 import com.epam.ta.reportportal.dao.ProjectRepository;
 import com.epam.ta.reportportal.entity.integration.Integration;
-import com.epam.reportportal.rules.exception.ReportPortalException;
-import com.epam.reportportal.rules.exception.ErrorType;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -81,7 +81,7 @@ public class PostTicketCommand extends ProjectMemberCommand<Ticket> {
     try {
       return TicketMapper.toTicket(gitlabClient.postIssue(project, queryParams));
     } catch (Exception e) {
-      throw new ReportPortalException(ErrorType.BAD_REQUEST_ERROR, e.getMessage());
+      throw new ReportPortalException(UNABLE_INTERACT_WITH_INTEGRATION, "Failed to create Gitlab ticket");
     }
   }
 
