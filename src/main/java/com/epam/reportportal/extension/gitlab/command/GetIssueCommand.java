@@ -34,10 +34,11 @@ import org.slf4j.LoggerFactory;
  * @author <a href="mailto:andrei_piankouski@epam.com">Andrei Piankouski</a>
  */
 public class GetIssueCommand implements CommonPluginCommand<Ticket> {
+
   private static final Logger LOGGER = LoggerFactory.getLogger(GetIssueCommand.class);
 
 
-  private final String PROJECT_ID = "projectId";
+  private static final String PROJECT_ID = "projectId";
 
   private final GitlabClientProvider gitlabClientProvider;
 
@@ -79,8 +80,9 @@ public class GetIssueCommand implements CommonPluginCommand<Ticket> {
       return TicketMapper.toTicket(
           gitlabClientProvider.get(integration.getParams()).getIssue(issueId, btsProject));
     } catch (Exception e) {
-      LOGGER.error("Issue not found: " + e.getMessage(), e);
-      throw new ReportPortalException(ErrorType.BAD_REQUEST_ERROR, e.getMessage());
+      LOGGER.error("Issue not found: {}", e.getMessage(), e);
+      throw new ReportPortalException(ErrorType.UNABLE_INTERACT_WITH_INTEGRATION,
+          "Failed to retrieve the Gitlab ticket");
     }
   }
 

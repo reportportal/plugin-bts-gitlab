@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
  * @author Zsolt Nagyaghy
  */
 public class GetIssuesCommand implements PluginCommand<List<IssueDto>> {
+
   private static final Logger LOGGER = LoggerFactory.getLogger(GetIssuesCommand.class);
 
   private final GitlabClientProvider gitlabClientProvider;
@@ -64,8 +65,9 @@ public class GetIssuesCommand implements PluginCommand<List<IssueDto>> {
       GitlabClient restClient = gitlabClientProvider.get(integrationParams);
       return restClient.getIssues(project);
     } catch (Exception e) {
-      LOGGER.error("Issues not found: " + e.getMessage(), e);
-      throw new ReportPortalException(ErrorType.BAD_REQUEST_ERROR, e.getMessage());
+      LOGGER.error("Issues not found: {}", e.getMessage(), e);
+      throw new ReportPortalException(ErrorType.UNABLE_INTERACT_WITH_INTEGRATION,
+          "Failed to retrieve the Gitlab tickets");
     }
   }
 }

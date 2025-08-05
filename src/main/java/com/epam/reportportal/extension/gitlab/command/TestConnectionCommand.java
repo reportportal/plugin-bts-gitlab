@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.epam.reportportal.extension.gitlab.command;
 
 import static java.util.Optional.ofNullable;
@@ -20,10 +21,10 @@ import static java.util.Optional.ofNullable;
 import com.epam.reportportal.extension.PluginCommand;
 import com.epam.reportportal.extension.gitlab.client.GitlabClient;
 import com.epam.reportportal.extension.gitlab.client.GitlabClientProvider;
+import com.epam.reportportal.rules.exception.ErrorType;
+import com.epam.reportportal.rules.exception.ReportPortalException;
 import com.epam.ta.reportportal.entity.integration.Integration;
 import com.epam.ta.reportportal.entity.integration.IntegrationParams;
-import com.epam.reportportal.rules.exception.ReportPortalException;
-import com.epam.reportportal.rules.exception.ErrorType;
 import java.util.Map;
 import java.util.Objects;
 import org.slf4j.Logger;
@@ -63,11 +64,9 @@ public class TestConnectionCommand implements PluginCommand<Boolean> {
       GitlabClient restClient = gitlabClientProvider.get(integrationParams);
       return Objects.equals(restClient.getProject(project).getId(), Long.valueOf(project));
     } catch (Exception e) {
-      LOGGER.error("Unable to connect to GitLab: " + e.getMessage(), e);
+      LOGGER.error("Unable to connect to GitLab: {}", e.getMessage(), e);
       throw new ReportPortalException(ErrorType.UNABLE_INTERACT_WITH_INTEGRATION,
-          String.format("Unable to connect to GitLab. Message: %s", e.getMessage()),
-          e
-      );
+          "Unable to connect to GitLab. Please check integration parameters");
     }
   }
 }
