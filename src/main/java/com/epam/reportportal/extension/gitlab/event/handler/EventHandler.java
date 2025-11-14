@@ -20,5 +20,5 @@ package com.epam.reportportal.extension.gitlab.event.handler;
  */
 public interface EventHandler<T> {
 
-	void handle(T event);
+  void handle(T event);
 }

@@ -21,13 +21,13 @@ import static com.epam.reportportal.extension.gitlab.command.PredefinedFieldType
 import static com.epam.reportportal.extension.gitlab.command.PredefinedFieldTypes.MULTI_AUTOCOMPLETE;
 
 import com.epam.reportportal.extension.ProjectMemberCommand;
-import com.epam.reportportal.model.externalsystem.AllowedValue;
-import com.epam.reportportal.model.externalsystem.PostFormField;
-import com.epam.ta.reportportal.dao.ProjectRepository;
-import com.epam.ta.reportportal.dao.organization.OrganizationRepositoryCustom;
-import com.epam.ta.reportportal.entity.integration.Integration;
-import com.epam.reportportal.rules.exception.ReportPortalException;
-import com.epam.reportportal.rules.exception.ErrorType;
+import com.epam.reportportal.infrastructure.model.externalsystem.AllowedValue;
+import com.epam.reportportal.infrastructure.model.externalsystem.PostFormField;
+import com.epam.reportportal.infrastructure.persistence.dao.ProjectRepository;
+import com.epam.reportportal.infrastructure.persistence.dao.organization.OrganizationRepositoryCustom;
+import com.epam.reportportal.infrastructure.persistence.entity.integration.Integration;
+import com.epam.reportportal.infrastructure.rules.exception.ErrorType;
+import com.epam.reportportal.infrastructure.rules.exception.ReportPortalException;
 import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +47,8 @@ public class GetIssueFieldsCommand extends ProjectMemberCommand<List<PostFormFie
   private static final String ASSIGNEE_DESCRIPTION =
       "Note that the free version of GitLab allows only one assignee";
 
-  public GetIssueFieldsCommand(ProjectRepository projectRepository, OrganizationRepositoryCustom organizationRepository) {
+  public GetIssueFieldsCommand(ProjectRepository projectRepository,
+      OrganizationRepositoryCustom organizationRepository) {
     super(projectRepository, organizationRepository);
   }
 

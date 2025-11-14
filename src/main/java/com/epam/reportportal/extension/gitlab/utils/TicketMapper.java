@@ -16,7 +16,7 @@
 package com.epam.reportportal.extension.gitlab.utils;
 
 import com.epam.reportportal.extension.gitlab.dto.IssueDto;
-import com.epam.reportportal.model.externalsystem.Ticket;
+import com.epam.reportportal.infrastructure.model.externalsystem.Ticket;
 
 /**
  * @author <a href="mailto:pavel_bortnik@epam.com">Pavel Bortnik</a>
