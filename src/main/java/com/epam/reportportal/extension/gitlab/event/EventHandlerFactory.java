@@ -22,5 +22,5 @@ import com.epam.reportportal.extension.gitlab.event.handler.EventHandler;
  */
 public interface EventHandlerFactory<T> {
 
-	EventHandler<T> getEventHandler(String key);
+  EventHandler<T> getEventHandler(String key);
 }
