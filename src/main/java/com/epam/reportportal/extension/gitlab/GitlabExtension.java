@@ -6,8 +6,7 @@ import com.epam.reportportal.extension.NamedPluginCommand;
 import com.epam.reportportal.extension.PluginCommand;
 import com.epam.reportportal.extension.ReportPortalExtensionPoint;
 import com.epam.reportportal.extension.common.IntegrationTypeProperties;
-import com.epam.reportportal.extension.event.PluginEvent;
-import com.epam.reportportal.extension.event.StartLaunchEvent;
+import com.epam.reportportal.core.events.domain.PluginUploadedEvent;
 import com.epam.reportportal.extension.gitlab.client.GitlabClientProvider;
 import com.epam.reportportal.extension.gitlab.command.DescriptionBuilderService;
 import com.epam.reportportal.extension.gitlab.command.GetIssueCommand;
@@ -22,9 +21,7 @@ import com.epam.reportportal.extension.gitlab.command.SearchLabelsCommand;
 import com.epam.reportportal.extension.gitlab.command.SearchMilestonesCommand;
 import com.epam.reportportal.extension.gitlab.command.SearchUsersCommand;
 import com.epam.reportportal.extension.gitlab.command.TestConnectionCommand;
-import com.epam.reportportal.extension.gitlab.event.launch.StartLaunchEventListener;
-import com.epam.reportportal.extension.gitlab.event.plugin.PluginEventHandlerFactory;
-import com.epam.reportportal.extension.gitlab.event.plugin.PluginEventListener;
+import com.epam.reportportal.extension.gitlab.event.plugin.PluginLoadedEventListener;
 import com.epam.reportportal.extension.gitlab.info.impl.PluginInfoProviderImpl;
 import com.epam.reportportal.extension.gitlab.utils.GitlabObjectMapperProvider;
 import com.epam.reportportal.extension.gitlab.utils.MemoizingSupplier;
@@ -32,7 +29,6 @@ import com.epam.reportportal.extension.util.RequestEntityConverter;
 import com.epam.reportportal.infrastructure.persistence.binary.DataStoreService;
 import com.epam.reportportal.infrastructure.persistence.dao.IntegrationRepository;
 import com.epam.reportportal.infrastructure.persistence.dao.IntegrationTypeRepository;
-import com.epam.reportportal.infrastructure.persistence.dao.LaunchRepository;
 import com.epam.reportportal.infrastructure.persistence.dao.LogRepository;
 import com.epam.reportportal.infrastructure.persistence.dao.ProjectRepository;
 import com.epam.reportportal.infrastructure.persistence.dao.TestItemRepository;
@@ -66,8 +62,7 @@ public class GitlabExtension implements ReportPortalExtensionPoint, DisposableBe
   private static final String DOCUMENTATION_LINK = "https://reportportal.io/docs/plugins/GitLab/";
   private final String resourcesDir;
   private final RequestEntityConverter requestEntityConverter;
-  private final Supplier<ApplicationListener<PluginEvent>> pluginLoadedListenerSupplier;
-  private final Supplier<ApplicationListener<StartLaunchEvent>> startLaunchEventListenerSupplier;
+  private final Supplier<ApplicationListener<PluginUploadedEvent>> pluginLoadedListenerSupplier;
   private final Supplier<GitlabClientProvider> gitlabClientProviderSupplier;
   private final Supplier<DescriptionBuilderService> descriptionBuilderServiceSupplier;
   @Autowired
@@ -85,8 +80,6 @@ public class GitlabExtension implements ReportPortalExtensionPoint, DisposableBe
   private final Supplier<Map<String, PluginCommand<?>>> pluginCommandMapping = new MemoizingSupplier<>(
       this::getCommands);
   @Autowired
-  private LaunchRepository launchRepository;
-  @Autowired
   private LogRepository logRepository;
   @Autowired
   private TestItemRepository testItemRepository;
@@ -103,13 +96,9 @@ public class GitlabExtension implements ReportPortalExtensionPoint, DisposableBe
         .map(String::valueOf).orElse("");
 
     pluginLoadedListenerSupplier = new MemoizingSupplier<>(
-        () -> new PluginEventListener(PLUGIN_ID, new PluginEventHandlerFactory(
-            integrationTypeRepository,
-            integrationRepository,
+        () -> new PluginLoadedEventListener(PLUGIN_ID, integrationTypeRepository, integrationRepository,
             new PluginInfoProviderImpl(resourcesDir, BINARY_DATA_PROPERTIES_FILE_ID)
-        )));
-    startLaunchEventListenerSupplier = new MemoizingSupplier<>(
-        () -> new StartLaunchEventListener(launchRepository));
+        ));
 
     gitlabClientProviderSupplier = new MemoizingSupplier<>(
         () -> new GitlabClientProvider(textEncryptor));
@@ -154,7 +143,6 @@ public class GitlabExtension implements ReportPortalExtensionPoint, DisposableBe
         ApplicationEventMulticaster.class
     );
     applicationEventMulticaster.addApplicationListener(pluginLoadedListenerSupplier.get());
-    applicationEventMulticaster.addApplicationListener(startLaunchEventListenerSupplier.get());
   }
 
   @Override
@@ -168,7 +156,6 @@ public class GitlabExtension implements ReportPortalExtensionPoint, DisposableBe
         ApplicationEventMulticaster.class
     );
     applicationEventMulticaster.removeApplicationListener(pluginLoadedListenerSupplier.get());
-    applicationEventMulticaster.removeApplicationListener(startLaunchEventListenerSupplier.get());
   }
 
   private Map<String, CommonPluginCommand<?>> getCommonCommands() {
