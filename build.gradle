@@ -1,7 +1,8 @@
 plugins {
-    id "io.spring.dependency-management" version "1.1.7"
+    id 'io.spring.dependency-management' version '1.1.7'
     id 'java'
-    id "com.github.node-gradle.node" version "2.2.1"
+    id "com.github.node-gradle.node" version "7.1.0"
+    id 'com.gradleup.shadow' version '9.3.1'
     id "org.jooq.jooq-codegen-gradle" version "3.19.18"
 }
 
@@ -15,10 +16,10 @@ apply from: scriptsUrl + '/release-fat.gradle'
 apply from: scriptsUrl + '/signing.gradle'
 
 repositories {
-    mavenCentral { url "https://repo1.maven.org/maven2" }
+    mavenCentral { url = "https://repo1.maven.org/maven2" }
 
     if (!releaseMode) {
-        maven { url 'https://jitpack.io' }
+        maven { url = 'https://jitpack.io' }
     }
 }
 
@@ -29,8 +30,8 @@ dependencies {
         implementation 'com.epam.reportportal:service-api'
         annotationProcessor 'com.epam.reportportal:service-api'
     } else {
-        implementation 'com.github.reportportal:service-api:4a137a7'
-        annotationProcessor 'com.github.reportportal:service-api:4a137a7'
+        implementation 'com.github.reportportal:service-api:7044a29'
+        annotationProcessor 'com.github.reportportal:service-api:7044a29'
     }
 
     // add lombok support
@@ -38,16 +39,10 @@ dependencies {
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
     testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
     testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
-
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
-wrapper {
-    gradleVersion = '8.10.2'
-}
-
-artifacts {
-    archives shadowJar
-}
+assemble.dependsOn shadowJar
 
 sourceSets {
     main {
@@ -99,7 +94,7 @@ shadowJar {
         into("/resources")
     }
     configurations = [project.configurations.compileClasspath]
-    zip64 true
+    zip64 = true
     dependencies {
         include(dependency('javax.servlet:javax.servlet-api:.*'))
     }
