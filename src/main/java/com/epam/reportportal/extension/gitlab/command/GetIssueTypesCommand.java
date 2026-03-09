@@ -16,9 +16,9 @@
 package com.epam.reportportal.extension.gitlab.command;
 
 import com.epam.reportportal.extension.ProjectMemberCommand;
-import com.epam.reportportal.infrastructure.persistence.dao.ProjectRepository;
-import com.epam.reportportal.infrastructure.persistence.dao.organization.OrganizationRepositoryCustom;
-import com.epam.reportportal.infrastructure.persistence.entity.integration.Integration;
+import com.epam.reportportal.base.infrastructure.persistence.dao.ProjectRepository;
+import com.epam.reportportal.base.infrastructure.persistence.dao.organization.OrganizationRepositoryCustom;
+import com.epam.reportportal.base.infrastructure.persistence.entity.integration.Integration;
 import java.util.List;
 import java.util.Map;
 
