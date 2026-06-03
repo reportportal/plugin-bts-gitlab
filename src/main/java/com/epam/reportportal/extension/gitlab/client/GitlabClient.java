@@ -25,8 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.jooq.tools.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpEntity;
@@ -42,9 +41,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 /**
  * @author Zsolt Nagyaghy
  */
+@Slf4j
 public class GitlabClient {
-
-  private static final Logger logger = LoggerFactory.getLogger(GitlabClient.class);
 
   private static final Integer DEFAULT_PAGE_SIZE = 100;
   private static final Integer FIRST_PAGE = 1;
