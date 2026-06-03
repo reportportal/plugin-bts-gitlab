@@ -16,43 +16,44 @@
 
 package com.epam.reportportal.extension.gitlab.command;
 
+import static java.util.Optional.ofNullable;
 
-import com.epam.reportportal.extension.CommonPluginCommand;
-import com.epam.reportportal.extension.gitlab.client.GitlabClientProvider;
-import com.epam.reportportal.extension.gitlab.utils.TicketMapper;
+import com.epam.reportportal.api.model.PluginCommandRQ;
 import com.epam.reportportal.base.infrastructure.model.externalsystem.Ticket;
 import com.epam.reportportal.base.infrastructure.persistence.dao.IntegrationRepository;
+import com.epam.reportportal.base.infrastructure.persistence.dao.ProjectRepository;
+import com.epam.reportportal.base.infrastructure.persistence.dao.organization.OrganizationRepositoryCustom;
 import com.epam.reportportal.base.infrastructure.persistence.entity.integration.Integration;
 import com.epam.reportportal.base.infrastructure.rules.exception.ErrorType;
 import com.epam.reportportal.base.infrastructure.rules.exception.ReportPortalException;
-import java.util.Map;
-import java.util.Optional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.epam.reportportal.extension.command.AbstractExtensionCommand;
+import com.epam.reportportal.extension.gitlab.client.GitlabClientProvider;
+import com.epam.reportportal.extension.gitlab.utils.TicketMapper;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author <a href="mailto:andrei_piankouski@epam.com">Andrei Piankouski</a>
  */
-public class GetIssueCommand implements CommonPluginCommand<Ticket> {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(GetIssueCommand.class);
-
+@Slf4j
+public class GetIssueCommand extends AbstractExtensionCommand<Ticket> {
 
   private static final String PROJECT_ID = "projectId";
 
   private final GitlabClientProvider gitlabClientProvider;
-
   private final IntegrationRepository integrationRepository;
 
   public GetIssueCommand(GitlabClientProvider gitlabClientProvider,
-      IntegrationRepository integrationRepository) {
+      IntegrationRepository integrationRepository, ProjectRepository projectRepository,
+      OrganizationRepositoryCustom organizationRepository) {
+    super(projectRepository, organizationRepository);
     this.gitlabClientProvider = gitlabClientProvider;
     this.integrationRepository = integrationRepository;
   }
 
   @Override
-  public Ticket executeCommand(Map<String, Object> params) {
-    final Long projectId = (Long) Optional.ofNullable(params.get(PROJECT_ID)).orElseThrow(
+  public Ticket executeCommand(PluginCommandRQ pluginCommandRq) {
+    var params = pluginCommandRq.getArguments();
+    final Long projectId = (Long) ofNullable(params.get(PROJECT_ID)).orElseThrow(
         () -> new ReportPortalException(ErrorType.BAD_REQUEST_ERROR,
             PROJECT_ID + " must be provided"
         ));
@@ -80,7 +81,7 @@ public class GetIssueCommand implements CommonPluginCommand<Ticket> {
       return TicketMapper.toTicket(
           gitlabClientProvider.get(integration.getParams()).getIssue(issueId, btsProject));
     } catch (Exception e) {
-      LOGGER.error("Issue not found: {}", e.getMessage(), e);
+      log.error("Issue not found: {}", e.getMessage(), e);
       throw new ReportPortalException(ErrorType.UNABLE_INTERACT_WITH_INTEGRATION,
           "Failed to retrieve the Gitlab ticket");
     }
