@@ -20,18 +20,11 @@ import com.epam.reportportal.extension.CommonPluginCommand;
 import com.google.common.collect.Maps;
 import java.util.Map;
 import java.util.Optional;
-import org.jasypt.util.text.BasicTextEncryptor;
 
 /**
  * @author <a href="mailto:pavel_bortnik@epam.com">Pavel Bortnik</a>
  */
 public class RetrieveUpdateParamsCommand implements CommonPluginCommand<Map<String, Object>> {
-
-  private final BasicTextEncryptor textEncryptor;
-
-  public RetrieveUpdateParamsCommand(BasicTextEncryptor textEncryptor) {
-    this.textEncryptor = textEncryptor;
-  }
 
   @Override
   public String getName() {
@@ -47,8 +40,7 @@ public class RetrieveUpdateParamsCommand implements CommonPluginCommand<Map<Stri
     GitlabProperties.PROJECT.getParam(integrationParams)
         .ifPresent(url -> resultParams.put(GitlabProperties.PROJECT.getName(), url));
     GitlabProperties.API_TOKEN.getParam(integrationParams)
-        .ifPresent(token -> resultParams.put(GitlabProperties.API_TOKEN.getName(),
-            textEncryptor.encrypt(token)));
+        .ifPresent(token -> resultParams.put(GitlabProperties.API_TOKEN.getName(), token));
     Optional.ofNullable(integrationParams.get("defectFormFields"))
         .ifPresent(defectFormFields -> resultParams.put("defectFormFields", defectFormFields));
     return resultParams;
