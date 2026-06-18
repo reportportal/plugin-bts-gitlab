@@ -13,19 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.epam.reportportal.extension.gitlab.command;
 
-import com.epam.reportportal.extension.ProjectMemberCommand;
+import com.epam.reportportal.api.model.PluginCommandRQ;
 import com.epam.reportportal.base.infrastructure.persistence.dao.ProjectRepository;
 import com.epam.reportportal.base.infrastructure.persistence.dao.organization.OrganizationRepositoryCustom;
 import com.epam.reportportal.base.infrastructure.persistence.entity.integration.Integration;
+import com.epam.reportportal.extension.command.AbstractExtensionCommand;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author <a href="mailto:pavel_bortnik@epam.com">Pavel Bortnik</a>
  */
-public class GetIssueTypesCommand extends ProjectMemberCommand<List<String>> {
+public class GetIssueTypesCommand extends AbstractExtensionCommand<List<String>> {
 
   public static final String ISSUE = "Issue";
   public static final String INCIDENT = "Incident";
@@ -41,7 +42,7 @@ public class GetIssueTypesCommand extends ProjectMemberCommand<List<String>> {
   }
 
   @Override
-  protected List<String> invokeCommand(Integration integration, Map<String, Object> params) {
+  protected List<String> invokeCommand(Integration integration, PluginCommandRQ pluginCommandRq) {
     return List.of(ISSUE, INCIDENT);
   }
 }

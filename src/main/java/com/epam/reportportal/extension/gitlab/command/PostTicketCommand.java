@@ -24,13 +24,7 @@ import static com.epam.reportportal.base.infrastructure.rules.commons.validation
 import static com.epam.reportportal.base.infrastructure.rules.exception.ErrorType.UNABLE_INTERACT_WITH_INTEGRATION;
 import static java.util.function.Predicate.not;
 
-import com.epam.reportportal.extension.ProjectMemberCommand;
-import com.epam.reportportal.extension.gitlab.client.GitlabClient;
-import com.epam.reportportal.extension.gitlab.client.GitlabClientProvider;
-import com.epam.reportportal.extension.gitlab.utils.TicketMapper;
-import com.epam.reportportal.extension.util.CommandParamUtils;
-import com.epam.reportportal.extension.util.RequestEntityConverter;
-import com.epam.reportportal.extension.util.RequestEntityValidator;
+import com.epam.reportportal.api.model.PluginCommandRQ;
 import com.epam.reportportal.base.infrastructure.model.externalsystem.PostFormField;
 import com.epam.reportportal.base.infrastructure.model.externalsystem.PostTicketRQ;
 import com.epam.reportportal.base.infrastructure.model.externalsystem.Ticket;
@@ -38,6 +32,13 @@ import com.epam.reportportal.base.infrastructure.persistence.dao.ProjectReposito
 import com.epam.reportportal.base.infrastructure.persistence.dao.organization.OrganizationRepositoryCustom;
 import com.epam.reportportal.base.infrastructure.persistence.entity.integration.Integration;
 import com.epam.reportportal.base.infrastructure.rules.exception.ReportPortalException;
+import com.epam.reportportal.extension.command.AbstractExtensionCommand;
+import com.epam.reportportal.extension.gitlab.client.GitlabClient;
+import com.epam.reportportal.extension.gitlab.client.GitlabClientProvider;
+import com.epam.reportportal.extension.gitlab.utils.TicketMapper;
+import com.epam.reportportal.extension.util.CommandParamUtils;
+import com.epam.reportportal.extension.util.RequestEntityConverter;
+import com.epam.reportportal.extension.util.RequestEntityValidator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -48,7 +49,7 @@ import org.springframework.util.CollectionUtils;
 /**
  * @author <a href="mailto:pavel_bortnik@epam.com">Pavel Bortnik</a>
  */
-public class PostTicketCommand extends ProjectMemberCommand<Ticket> {
+public class PostTicketCommand extends AbstractExtensionCommand<Ticket> {
 
   private final GitlabClientProvider gitlabClientProvider;
   private final RequestEntityConverter requestEntityConverter;
@@ -56,7 +57,8 @@ public class PostTicketCommand extends ProjectMemberCommand<Ticket> {
 
   public PostTicketCommand(ProjectRepository projectRepository,
       GitlabClientProvider gitlabClientProvider, RequestEntityConverter requestEntityConverter,
-      DescriptionBuilderService descriptionBuilderService, OrganizationRepositoryCustom organizationRepository) {
+      DescriptionBuilderService descriptionBuilderService,
+      OrganizationRepositoryCustom organizationRepository) {
     super(projectRepository, organizationRepository);
     this.gitlabClientProvider = gitlabClientProvider;
     this.requestEntityConverter = requestEntityConverter;
@@ -64,9 +66,9 @@ public class PostTicketCommand extends ProjectMemberCommand<Ticket> {
   }
 
   @Override
-  protected Ticket invokeCommand(Integration integration, Map<String, Object> params) {
-    PostTicketRQ ticketRQ = requestEntityConverter.getEntity(CommandParamUtils.ENTITY_PARAM, params,
-        PostTicketRQ.class
+  protected Ticket invokeCommand(Integration integration, PluginCommandRQ pluginCommandRq) {
+    PostTicketRQ ticketRQ = requestEntityConverter.getEntity(CommandParamUtils.ENTITY_PARAM,
+        pluginCommandRq.getArguments(), PostTicketRQ.class
     );
     RequestEntityValidator.validate(ticketRQ);
     expect(ticketRQ.getFields(), not(isNull())).verify(UNABLE_INTERACT_WITH_INTEGRATION,
@@ -81,7 +83,8 @@ public class PostTicketCommand extends ProjectMemberCommand<Ticket> {
     try {
       return TicketMapper.toTicket(gitlabClient.postIssue(project, queryParams));
     } catch (Exception e) {
-      throw new ReportPortalException(UNABLE_INTERACT_WITH_INTEGRATION, "Failed to create Gitlab ticket");
+      throw new ReportPortalException(UNABLE_INTERACT_WITH_INTEGRATION,
+          "Failed to create Gitlab ticket");
     }
   }
 
@@ -97,8 +100,7 @@ public class PostTicketCommand extends ProjectMemberCommand<Ticket> {
         String extended = Optional.ofNullable(
                 descriptionBuilderService.getDescription(ticketRQ, gitlabClient, gitlabProjectId))
             .orElse("");
-        String extendedDescription = description + "\n" + extended;
-        params.put(field.getId(), extendedDescription);
+        params.put(field.getId(), description + "\n" + extended);
         continue;
       }
       if (NAMED_VALUE_FIELDS.contains(field.getFieldType())) {

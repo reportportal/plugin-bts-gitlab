@@ -20,7 +20,7 @@ import static com.epam.reportportal.extension.gitlab.command.GetIssueTypesComman
 import static com.epam.reportportal.extension.gitlab.command.PredefinedFieldTypes.CREATABLE_MULTI_AUTOCOMPLETE;
 import static com.epam.reportportal.extension.gitlab.command.PredefinedFieldTypes.MULTI_AUTOCOMPLETE;
 
-import com.epam.reportportal.extension.ProjectMemberCommand;
+import com.epam.reportportal.api.model.PluginCommandRQ;
 import com.epam.reportportal.base.infrastructure.model.externalsystem.AllowedValue;
 import com.epam.reportportal.base.infrastructure.model.externalsystem.PostFormField;
 import com.epam.reportportal.base.infrastructure.persistence.dao.ProjectRepository;
@@ -28,15 +28,15 @@ import com.epam.reportportal.base.infrastructure.persistence.dao.organization.Or
 import com.epam.reportportal.base.infrastructure.persistence.entity.integration.Integration;
 import com.epam.reportportal.base.infrastructure.rules.exception.ErrorType;
 import com.epam.reportportal.base.infrastructure.rules.exception.ReportPortalException;
+import com.epam.reportportal.extension.command.AbstractExtensionCommand;
 import com.google.common.collect.Lists;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 /**
  * @author <a href="mailto:pavel_bortnik@epam.com">Pavel Bortnik</a>
  */
-public class GetIssueFieldsCommand extends ProjectMemberCommand<List<PostFormField>> {
+public class GetIssueFieldsCommand extends AbstractExtensionCommand<List<PostFormField>> {
 
   public static final String ISSUE_TYPE = "issue_type";
   public static final String ISSUE_TYPE_PARAM = "issueType";
@@ -53,14 +53,17 @@ public class GetIssueFieldsCommand extends ProjectMemberCommand<List<PostFormFie
   }
 
   @Override
-  protected List<PostFormField> invokeCommand(Integration integration, Map<String, Object> params) {
-    String issueTypeParam = Optional.ofNullable(params.get(ISSUE_TYPE_PARAM)).map(it -> (String) it)
+  protected List<PostFormField> invokeCommand(Integration integration,
+      PluginCommandRQ pluginCommandRq) {
+    String issueTypeParam = Optional.ofNullable(pluginCommandRq.getArguments().get(ISSUE_TYPE_PARAM))
+        .map(it -> (String) it)
         .orElseThrow(() -> new ReportPortalException(ErrorType.BAD_REQUEST_ERROR,
             "Issue type is not provided"
         ));
     List<PostFormField> result = Lists.newArrayList(
         PostFormField.builder().id("title").fieldName("Title").fieldType("string").isRequired(true)
-            .build(), PostFormField.builder().id("description").fieldName("Description")
+            .build(),
+        PostFormField.builder().id("description").fieldName("Description")
             .fieldType("multilineText").build(),
         PostFormField.builder().id(ISSUE_TYPE).fieldName("Issue type").fieldType("issuetype")
             .isRequired(true).definedValues(

@@ -16,7 +16,10 @@
 
 package com.epam.reportportal.extension.gitlab.command;
 
-import com.epam.reportportal.extension.CommonPluginCommand;
+import com.epam.reportportal.api.model.PluginCommandRQ;
+import com.epam.reportportal.base.infrastructure.persistence.dao.ProjectRepository;
+import com.epam.reportportal.base.infrastructure.persistence.dao.organization.OrganizationRepositoryCustom;
+import com.epam.reportportal.extension.command.AbstractExtensionCommand;
 import com.google.common.collect.Maps;
 import java.util.Map;
 import java.util.Optional;
@@ -24,7 +27,12 @@ import java.util.Optional;
 /**
  * @author <a href="mailto:pavel_bortnik@epam.com">Pavel Bortnik</a>
  */
-public class RetrieveUpdateParamsCommand implements CommonPluginCommand<Map<String, Object>> {
+public class RetrieveUpdateParamsCommand extends AbstractExtensionCommand<Map<String, Object>> {
+
+  public RetrieveUpdateParamsCommand(
+      ProjectRepository projectRepository, OrganizationRepositoryCustom organizationRepository) {
+    super(projectRepository, organizationRepository);
+  }
 
   @Override
   public String getName() {
@@ -32,13 +40,13 @@ public class RetrieveUpdateParamsCommand implements CommonPluginCommand<Map<Stri
   }
 
   @Override
-  //@param integration is always null because it can be not saved yet
-  public Map<String, Object> executeCommand(Map<String, Object> integrationParams) {
+  public Map<String, Object> executeCommand(PluginCommandRQ pluginCommandRq) {
+    var integrationParams = pluginCommandRq.getArguments();
     Map<String, Object> resultParams = Maps.newHashMapWithExpectedSize(integrationParams.size());
     GitlabProperties.URL.getParam(integrationParams)
         .ifPresent(url -> resultParams.put(GitlabProperties.URL.getName(), url));
     GitlabProperties.PROJECT.getParam(integrationParams)
-        .ifPresent(url -> resultParams.put(GitlabProperties.PROJECT.getName(), url));
+        .ifPresent(project -> resultParams.put(GitlabProperties.PROJECT.getName(), project));
     GitlabProperties.API_TOKEN.getParam(integrationParams)
         .ifPresent(token -> resultParams.put(GitlabProperties.API_TOKEN.getName(), token));
     Optional.ofNullable(integrationParams.get("defectFormFields"))

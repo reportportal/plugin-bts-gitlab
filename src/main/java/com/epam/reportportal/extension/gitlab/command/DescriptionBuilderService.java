@@ -41,8 +41,7 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MimeTypes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Provide functionality for building ticket description
@@ -50,13 +49,13 @@ import org.slf4j.LoggerFactory;
  * @author Aliaksei_Makayed
  * @author Dzmitry_Kavalets
  */
+@Slf4j
 public class DescriptionBuilderService {
 
   public static final String BACK_LINK_HEADER = "### **Back link to Report Portal:**";
   public static final String BACK_LINK_PATTERN = "[Link to defect](%s)%n";
   public static final String COMMENTS_HEADER = "### **Test Item comments:**";
   public static final String CODE = "`";
-  private static final Logger LOGGER = LoggerFactory.getLogger(DescriptionBuilderService.class);
   private static final String IMAGE_CONTENT = "image";
   private static final String IMAGE_HEIGHT_TEMPLATE = "|height=366!";
 
