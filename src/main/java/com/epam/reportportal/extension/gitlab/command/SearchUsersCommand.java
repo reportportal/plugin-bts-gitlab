@@ -18,27 +18,34 @@ package com.epam.reportportal.extension.gitlab.command;
 
 import static java.util.Optional.ofNullable;
 
-import com.epam.reportportal.extension.PluginCommand;
-import com.epam.reportportal.extension.gitlab.client.GitlabClientProvider;
-import com.epam.reportportal.extension.gitlab.dto.UserDto;
+import com.epam.reportportal.api.model.PluginCommandRQ;
+import com.epam.reportportal.base.infrastructure.persistence.dao.ProjectRepository;
+import com.epam.reportportal.base.infrastructure.persistence.dao.ProjectUserRepository;
+import com.epam.reportportal.base.infrastructure.persistence.dao.organization.OrganizationRepository;
+import com.epam.reportportal.base.infrastructure.persistence.dao.organization.OrganizationUserRepository;
 import com.epam.reportportal.base.infrastructure.persistence.entity.integration.Integration;
 import com.epam.reportportal.base.infrastructure.persistence.entity.integration.IntegrationParams;
 import com.epam.reportportal.base.infrastructure.rules.exception.ErrorType;
 import com.epam.reportportal.base.infrastructure.rules.exception.ReportPortalException;
+import com.epam.reportportal.extension.command.AbstractExtensionCommand;
+import com.epam.reportportal.extension.gitlab.client.GitlabClientProvider;
+import com.epam.reportportal.extension.gitlab.dto.UserDto;
 import java.util.List;
-import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author <a href="mailto:pavel_bortnik@epam.com">Pavel Bortnik</a>
  */
-public class SearchUsersCommand implements PluginCommand<List<UserDto>> {
+@Slf4j
+public class SearchUsersCommand extends AbstractExtensionCommand<List<UserDto>> {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(SearchUsersCommand.class);
   private final GitlabClientProvider gitlabClientProvider;
 
-  public SearchUsersCommand(GitlabClientProvider gitlabClientProvider) {
+  public SearchUsersCommand(GitlabClientProvider gitlabClientProvider,
+      ProjectRepository projectRepository, OrganizationUserRepository organizationUserRepository,
+      OrganizationRepository organizationRepository, ProjectUserRepository projectUserRepository) {
+    super(projectRepository, organizationUserRepository, organizationRepository,
+        projectUserRepository);
     this.gitlabClientProvider = gitlabClientProvider;
   }
 
@@ -48,7 +55,7 @@ public class SearchUsersCommand implements PluginCommand<List<UserDto>> {
   }
 
   @Override
-  public List<UserDto> executeCommand(Integration integration, Map<String, Object> params) {
+  protected List<UserDto> invokeCommand(Integration integration, PluginCommandRQ pluginCommandRq) {
     IntegrationParams integrationParams = ofNullable(integration.getParams()).orElseThrow(
         () -> new ReportPortalException(ErrorType.UNABLE_INTERACT_WITH_INTEGRATION,
             "Integration params are not specified."
@@ -58,7 +65,7 @@ public class SearchUsersCommand implements PluginCommand<List<UserDto>> {
         () -> new ReportPortalException(ErrorType.UNABLE_INTERACT_WITH_INTEGRATION,
             "Project ID is not specified."
         ));
-    String term = GitlabProperties.SEARCH_TERM.getParam(params).orElseThrow(
+    String term = GitlabProperties.SEARCH_TERM.getParam(pluginCommandRq.getArguments()).orElseThrow(
         () -> new ReportPortalException(ErrorType.UNABLE_INTERACT_WITH_INTEGRATION,
             "Search term is not specified"
         ));
@@ -66,7 +73,7 @@ public class SearchUsersCommand implements PluginCommand<List<UserDto>> {
     try {
       return gitlabClientProvider.get(integrationParams).searchUsers(project, term);
     } catch (Exception e) {
-      LOGGER.error("Issues not found: {}", e.getMessage(), e);
+      log.error("Issues not found: {}", e.getMessage(), e);
       throw new ReportPortalException(ErrorType.UNABLE_INTERACT_WITH_INTEGRATION,
           "Failed to retrieve the list of Gitlab users");
     }

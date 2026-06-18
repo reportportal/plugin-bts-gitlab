@@ -5,6 +5,7 @@ import com.epam.reportportal.extension.IntegrationGroupEnum;
 import com.epam.reportportal.extension.NamedPluginCommand;
 import com.epam.reportportal.extension.PluginCommand;
 import com.epam.reportportal.extension.ReportPortalExtensionPoint;
+import com.epam.reportportal.extension.command.ExtensionCommand;
 import com.epam.reportportal.extension.common.IntegrationTypeProperties;
 import com.epam.reportportal.base.core.events.domain.PluginUploadedEvent;
 import com.epam.reportportal.extension.gitlab.client.GitlabClientProvider;
@@ -31,8 +32,10 @@ import com.epam.reportportal.base.infrastructure.persistence.dao.IntegrationRepo
 import com.epam.reportportal.base.infrastructure.persistence.dao.IntegrationTypeRepository;
 import com.epam.reportportal.base.infrastructure.persistence.dao.LogRepository;
 import com.epam.reportportal.base.infrastructure.persistence.dao.ProjectRepository;
+import com.epam.reportportal.base.infrastructure.persistence.dao.ProjectUserRepository;
 import com.epam.reportportal.base.infrastructure.persistence.dao.TestItemRepository;
-import com.epam.reportportal.base.infrastructure.persistence.dao.organization.OrganizationRepositoryCustom;
+import com.epam.reportportal.base.infrastructure.persistence.dao.organization.OrganizationRepository;
+import com.epam.reportportal.base.infrastructure.persistence.dao.organization.OrganizationUserRepository;
 import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -75,18 +78,22 @@ public class GitlabExtension implements ReportPortalExtensionPoint, DisposableBe
   private ProjectRepository projectRepository;
 
   @Autowired
-  private OrganizationRepositoryCustom organizationRepository;
+  private OrganizationUserRepository organizationUserRepository;
+  @Autowired
+  private OrganizationRepository organizationRepository;
+  @Autowired
+  private ProjectUserRepository projectUserRepository;
 
-  private final Supplier<Map<String, PluginCommand<?>>> pluginCommandMapping = new MemoizingSupplier<>(
-      this::getCommands);
+  private final Supplier<Map<String, ExtensionCommand<?>>> pluginCommandMapping = new MemoizingSupplier<>(
+      this::getIntegrationExtensionCommands);
+  private final Supplier<Map<String, ExtensionCommand<?>>> commonCommandMapping = new MemoizingSupplier<>(
+      this::getCommonExtensionCommands);
   @Autowired
   private LogRepository logRepository;
   @Autowired
   private TestItemRepository testItemRepository;
   @Autowired
   private BasicTextEncryptor textEncryptor;
-  private final Supplier<Map<String, CommonPluginCommand<?>>> commonPluginCommandMapping = new MemoizingSupplier<>(
-      this::getCommonCommands);
   @Autowired
   @Qualifier("attachmentDataStoreService")
   private DataStoreService dataStoreService;
@@ -113,18 +120,18 @@ public class GitlabExtension implements ReportPortalExtensionPoint, DisposableBe
     Map<String, Object> params = new HashMap<>();
     params.put(ALLOWED_COMMANDS, new ArrayList<>(pluginCommandMapping.get().keySet()));
     params.put(DOCUMENTATION_LINK_FIELD, DOCUMENTATION_LINK);
-    params.put(COMMON_COMMANDS, new ArrayList<>(commonPluginCommandMapping.get().keySet()));
+    params.put(COMMON_COMMANDS, new ArrayList<>(commonCommandMapping.get().keySet()));
     return params;
   }
 
   @Override
   public PluginCommand<?> getIntegrationCommand(String commandName) {
-    return pluginCommandMapping.get().get(commandName);
+    return null;
   }
 
   @Override
   public CommonPluginCommand<?> getCommonCommand(String commandName) {
-    return commonPluginCommandMapping.get().get(commandName);
+    return null;
   }
 
   @Override
@@ -158,26 +165,41 @@ public class GitlabExtension implements ReportPortalExtensionPoint, DisposableBe
     applicationEventMulticaster.removeApplicationListener(pluginLoadedListenerSupplier.get());
   }
 
-  private Map<String, CommonPluginCommand<?>> getCommonCommands() {
-    List<CommonPluginCommand<?>> commands = new ArrayList<>();
-    commands.add(new RetrieveCreationParamsCommand(textEncryptor));
-    commands.add(new RetrieveUpdateParamsCommand(textEncryptor));
-    commands.add(new GetIssueCommand(gitlabClientProviderSupplier.get(), integrationRepository));
+  @Override
+  public Map<String, ExtensionCommand<?>> getCommonExtensionCommands() {
+    List<ExtensionCommand<?>> commands = new ArrayList<>();
+    commands.add(new RetrieveCreationParamsCommand(projectRepository, organizationUserRepository,
+        organizationRepository, projectUserRepository));
+    commands.add(new RetrieveUpdateParamsCommand(projectRepository, organizationUserRepository,
+        organizationRepository, projectUserRepository));
+    commands.add(new GetIssueCommand(gitlabClientProviderSupplier.get(), integrationRepository,
+        projectRepository, organizationUserRepository, organizationRepository,
+        projectUserRepository));
     return commands.stream().collect(Collectors.toMap(NamedPluginCommand::getName, it -> it));
   }
 
-  private Map<String, PluginCommand<?>> getCommands() {
-    List<PluginCommand<?>> commands = new ArrayList<>();
-    commands.add(new TestConnectionCommand(gitlabClientProviderSupplier.get()));
-    commands.add(new GetIssuesCommand(gitlabClientProviderSupplier.get()));
-    commands.add(new SearchUsersCommand(gitlabClientProviderSupplier.get()));
-    commands.add(new SearchMilestonesCommand(gitlabClientProviderSupplier.get()));
-    commands.add(new SearchEpicsCommand(gitlabClientProviderSupplier.get()));
-    commands.add(new SearchLabelsCommand(gitlabClientProviderSupplier.get()));
-    commands.add(new GetIssueTypesCommand(projectRepository, organizationRepository));
-    commands.add(new GetIssueFieldsCommand(projectRepository, organizationRepository));
+  @Override
+  public Map<String, ExtensionCommand<?>> getIntegrationExtensionCommands() {
+    List<ExtensionCommand<?>> commands = new ArrayList<>();
+    commands.add(new TestConnectionCommand(gitlabClientProviderSupplier.get(), projectRepository,
+        organizationUserRepository, organizationRepository, projectUserRepository));
+    commands.add(new GetIssuesCommand(gitlabClientProviderSupplier.get(), projectRepository,
+        organizationUserRepository, organizationRepository, projectUserRepository));
+    commands.add(new SearchUsersCommand(gitlabClientProviderSupplier.get(), projectRepository,
+        organizationUserRepository, organizationRepository, projectUserRepository));
+    commands.add(new SearchMilestonesCommand(gitlabClientProviderSupplier.get(), projectRepository,
+        organizationUserRepository, organizationRepository, projectUserRepository));
+    commands.add(new SearchEpicsCommand(gitlabClientProviderSupplier.get(), projectRepository,
+        organizationUserRepository, organizationRepository, projectUserRepository));
+    commands.add(new SearchLabelsCommand(gitlabClientProviderSupplier.get(), projectRepository,
+        organizationUserRepository, organizationRepository, projectUserRepository));
+    commands.add(new GetIssueTypesCommand(projectRepository, organizationUserRepository,
+        organizationRepository, projectUserRepository));
+    commands.add(new GetIssueFieldsCommand(projectRepository, organizationUserRepository,
+        organizationRepository, projectUserRepository));
     commands.add(new PostTicketCommand(projectRepository, gitlabClientProviderSupplier.get(),
-        requestEntityConverter, descriptionBuilderServiceSupplier.get(), organizationRepository));
+        requestEntityConverter, descriptionBuilderServiceSupplier.get(), organizationUserRepository,
+        organizationRepository, projectUserRepository));
     return commands.stream().collect(Collectors.toMap(NamedPluginCommand::getName, it -> it));
   }
 }

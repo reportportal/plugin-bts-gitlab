@@ -4,6 +4,7 @@ plugins {
     id "com.github.node-gradle.node" version "7.1.0"
     id 'com.gradleup.shadow' version '9.3.1'
     id "org.jooq.jooq-codegen-gradle" version "3.19.18"
+    id("io.freefair.lombok") version "9.5.0"
 }
 
 apply from: 'project-properties.gradle'
@@ -31,15 +32,10 @@ dependencies {
         implementation 'com.epam.reportportal:service-api'
         annotationProcessor 'com.epam.reportportal:service-api'
     } else {
-        implementation 'com.github.reportportal:service-api:e81b4f6'
-        annotationProcessor 'com.github.reportportal:service-api:e81b4f6'
+        implementation 'com.github.reportportal:service-api:0141b9e'
+        annotationProcessor 'com.github.reportportal:service-api:0141b9e'
     }
 
-    // add lombok support
-    compileOnly "org.projectlombok:lombok:${lombokVersion}"
-    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
-    testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
-    testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

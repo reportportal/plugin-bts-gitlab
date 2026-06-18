@@ -18,28 +18,34 @@ package com.epam.reportportal.extension.gitlab.command;
 
 import static java.util.Optional.ofNullable;
 
-import com.epam.reportportal.extension.PluginCommand;
-import com.epam.reportportal.extension.gitlab.client.GitlabClientProvider;
-import com.epam.reportportal.extension.gitlab.dto.MilestoneDto;
+import com.epam.reportportal.api.model.PluginCommandRQ;
+import com.epam.reportportal.base.infrastructure.persistence.dao.ProjectRepository;
+import com.epam.reportportal.base.infrastructure.persistence.dao.ProjectUserRepository;
+import com.epam.reportportal.base.infrastructure.persistence.dao.organization.OrganizationRepository;
+import com.epam.reportportal.base.infrastructure.persistence.dao.organization.OrganizationUserRepository;
 import com.epam.reportportal.base.infrastructure.persistence.entity.integration.Integration;
 import com.epam.reportportal.base.infrastructure.persistence.entity.integration.IntegrationParams;
 import com.epam.reportportal.base.infrastructure.rules.exception.ErrorType;
 import com.epam.reportportal.base.infrastructure.rules.exception.ReportPortalException;
+import com.epam.reportportal.extension.command.AbstractExtensionCommand;
+import com.epam.reportportal.extension.gitlab.client.GitlabClientProvider;
+import com.epam.reportportal.extension.gitlab.dto.MilestoneDto;
 import java.util.List;
-import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author <a href="mailto:pavel_bortnik@epam.com">Pavel Bortnik</a>
  */
-public class SearchMilestonesCommand implements PluginCommand<List<MilestoneDto>> {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(SearchMilestonesCommand.class);
+@Slf4j
+public class SearchMilestonesCommand extends AbstractExtensionCommand<List<MilestoneDto>> {
 
   private final GitlabClientProvider gitlabClientProvider;
 
-  public SearchMilestonesCommand(GitlabClientProvider gitlabClientProvider) {
+  public SearchMilestonesCommand(GitlabClientProvider gitlabClientProvider,
+      ProjectRepository projectRepository, OrganizationUserRepository organizationUserRepository,
+      OrganizationRepository organizationRepository, ProjectUserRepository projectUserRepository) {
+    super(projectRepository, organizationUserRepository, organizationRepository,
+        projectUserRepository);
     this.gitlabClientProvider = gitlabClientProvider;
   }
 
@@ -49,7 +55,8 @@ public class SearchMilestonesCommand implements PluginCommand<List<MilestoneDto>
   }
 
   @Override
-  public List<MilestoneDto> executeCommand(Integration integration, Map<String, Object> params) {
+  protected List<MilestoneDto> invokeCommand(Integration integration,
+      PluginCommandRQ pluginCommandRq) {
     IntegrationParams integrationParams = ofNullable(integration.getParams()).orElseThrow(
         () -> new ReportPortalException(ErrorType.UNABLE_INTERACT_WITH_INTEGRATION,
             "Integration params are not specified."
@@ -59,7 +66,7 @@ public class SearchMilestonesCommand implements PluginCommand<List<MilestoneDto>
         () -> new ReportPortalException(ErrorType.UNABLE_INTERACT_WITH_INTEGRATION,
             "Project ID is not specified."
         ));
-    String term = GitlabProperties.SEARCH_TERM.getParam(params).orElseThrow(
+    String term = GitlabProperties.SEARCH_TERM.getParam(pluginCommandRq.getArguments()).orElseThrow(
         () -> new ReportPortalException(ErrorType.UNABLE_INTERACT_WITH_INTEGRATION,
             "Search term is not specified"
         ));
@@ -67,10 +74,9 @@ public class SearchMilestonesCommand implements PluginCommand<List<MilestoneDto>
     try {
       return gitlabClientProvider.get(integrationParams).searchMilestones(project, term);
     } catch (Exception e) {
-      LOGGER.error("Issues not found: {}", e.getMessage(), e);
+      log.error("Issues not found: {}", e.getMessage(), e);
       throw new ReportPortalException(ErrorType.UNABLE_INTERACT_WITH_INTEGRATION,
           "Failed to retrieve the Gitlab milestones");
     }
   }
-
 }
