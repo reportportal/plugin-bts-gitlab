@@ -22,7 +22,9 @@ import com.epam.reportportal.api.model.PluginCommandRQ;
 import com.epam.reportportal.base.infrastructure.model.externalsystem.Ticket;
 import com.epam.reportportal.base.infrastructure.persistence.dao.IntegrationRepository;
 import com.epam.reportportal.base.infrastructure.persistence.dao.ProjectRepository;
-import com.epam.reportportal.base.infrastructure.persistence.dao.organization.OrganizationRepositoryCustom;
+import com.epam.reportportal.base.infrastructure.persistence.dao.ProjectUserRepository;
+import com.epam.reportportal.base.infrastructure.persistence.dao.organization.OrganizationRepository;
+import com.epam.reportportal.base.infrastructure.persistence.dao.organization.OrganizationUserRepository;
 import com.epam.reportportal.base.infrastructure.persistence.entity.integration.Integration;
 import com.epam.reportportal.base.infrastructure.rules.exception.ErrorType;
 import com.epam.reportportal.base.infrastructure.rules.exception.ReportPortalException;
@@ -44,8 +46,10 @@ public class GetIssueCommand extends AbstractExtensionCommand<Ticket> {
 
   public GetIssueCommand(GitlabClientProvider gitlabClientProvider,
       IntegrationRepository integrationRepository, ProjectRepository projectRepository,
-      OrganizationRepositoryCustom organizationRepository) {
-    super(projectRepository, organizationRepository);
+      OrganizationUserRepository organizationUserRepository,
+      OrganizationRepository organizationRepository, ProjectUserRepository projectUserRepository) {
+    super(projectRepository, organizationUserRepository, organizationRepository,
+        projectUserRepository);
     this.gitlabClientProvider = gitlabClientProvider;
     this.integrationRepository = integrationRepository;
   }

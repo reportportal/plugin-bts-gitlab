@@ -18,7 +18,9 @@ package com.epam.reportportal.extension.gitlab.command;
 
 import com.epam.reportportal.api.model.PluginCommandRQ;
 import com.epam.reportportal.base.infrastructure.persistence.dao.ProjectRepository;
-import com.epam.reportportal.base.infrastructure.persistence.dao.organization.OrganizationRepositoryCustom;
+import com.epam.reportportal.base.infrastructure.persistence.dao.ProjectUserRepository;
+import com.epam.reportportal.base.infrastructure.persistence.dao.organization.OrganizationRepository;
+import com.epam.reportportal.base.infrastructure.persistence.dao.organization.OrganizationUserRepository;
 import com.epam.reportportal.extension.command.AbstractExtensionCommand;
 import com.google.common.collect.Maps;
 import java.util.Map;
@@ -30,8 +32,10 @@ import java.util.Optional;
 public class RetrieveUpdateParamsCommand extends AbstractExtensionCommand<Map<String, Object>> {
 
   public RetrieveUpdateParamsCommand(
-      ProjectRepository projectRepository, OrganizationRepositoryCustom organizationRepository) {
-    super(projectRepository, organizationRepository);
+      ProjectRepository projectRepository, OrganizationUserRepository organizationUserRepository,
+      OrganizationRepository organizationRepository, ProjectUserRepository projectUserRepository) {
+    super(projectRepository, organizationUserRepository, organizationRepository,
+        projectUserRepository);
   }
 
   @Override
