@@ -1,5 +1,15 @@
 package com.epam.reportportal.extension.gitlab;
 
+import com.epam.reportportal.base.core.events.domain.PluginUploadedEvent;
+import com.epam.reportportal.base.infrastructure.persistence.binary.DataStoreService;
+import com.epam.reportportal.base.infrastructure.persistence.dao.IntegrationRepository;
+import com.epam.reportportal.base.infrastructure.persistence.dao.IntegrationTypeRepository;
+import com.epam.reportportal.base.infrastructure.persistence.dao.LogRepository;
+import com.epam.reportportal.base.infrastructure.persistence.dao.ProjectRepository;
+import com.epam.reportportal.base.infrastructure.persistence.dao.ProjectUserRepository;
+import com.epam.reportportal.base.infrastructure.persistence.dao.TestItemRepository;
+import com.epam.reportportal.base.infrastructure.persistence.dao.organization.OrganizationRepository;
+import com.epam.reportportal.base.infrastructure.persistence.dao.organization.OrganizationUserRepository;
 import com.epam.reportportal.extension.CommonPluginCommand;
 import com.epam.reportportal.extension.IntegrationGroupEnum;
 import com.epam.reportportal.extension.NamedPluginCommand;
@@ -7,7 +17,6 @@ import com.epam.reportportal.extension.PluginCommand;
 import com.epam.reportportal.extension.ReportPortalExtensionPoint;
 import com.epam.reportportal.extension.command.ExtensionCommand;
 import com.epam.reportportal.extension.common.IntegrationTypeProperties;
-import com.epam.reportportal.base.core.events.domain.PluginUploadedEvent;
 import com.epam.reportportal.extension.gitlab.client.GitlabClientProvider;
 import com.epam.reportportal.extension.gitlab.command.DescriptionBuilderService;
 import com.epam.reportportal.extension.gitlab.command.GetIssueCommand;
@@ -24,18 +33,9 @@ import com.epam.reportportal.extension.gitlab.command.SearchUsersCommand;
 import com.epam.reportportal.extension.gitlab.command.TestConnectionCommand;
 import com.epam.reportportal.extension.gitlab.event.plugin.PluginLoadedEventListener;
 import com.epam.reportportal.extension.gitlab.info.impl.PluginInfoProviderImpl;
-import com.epam.reportportal.extension.gitlab.utils.GitlabObjectMapperProvider;
 import com.epam.reportportal.extension.gitlab.utils.MemoizingSupplier;
 import com.epam.reportportal.extension.util.RequestEntityConverter;
-import com.epam.reportportal.base.infrastructure.persistence.binary.DataStoreService;
-import com.epam.reportportal.base.infrastructure.persistence.dao.IntegrationRepository;
-import com.epam.reportportal.base.infrastructure.persistence.dao.IntegrationTypeRepository;
-import com.epam.reportportal.base.infrastructure.persistence.dao.LogRepository;
-import com.epam.reportportal.base.infrastructure.persistence.dao.ProjectRepository;
-import com.epam.reportportal.base.infrastructure.persistence.dao.ProjectUserRepository;
-import com.epam.reportportal.base.infrastructure.persistence.dao.TestItemRepository;
-import com.epam.reportportal.base.infrastructure.persistence.dao.organization.OrganizationRepository;
-import com.epam.reportportal.base.infrastructure.persistence.dao.organization.OrganizationUserRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -64,7 +64,7 @@ public class GitlabExtension implements ReportPortalExtensionPoint, DisposableBe
   private static final String DOCUMENTATION_LINK_FIELD = "documentationLink";
   private static final String DOCUMENTATION_LINK = "https://reportportal.io/docs/plugins/GitLab/";
   private final String resourcesDir;
-  private final RequestEntityConverter requestEntityConverter;
+  private final Supplier<RequestEntityConverter> requestEntityConverterSupplier;
   private final Supplier<ApplicationListener<PluginUploadedEvent>> pluginLoadedListenerSupplier;
   private final Supplier<GitlabClientProvider> gitlabClientProviderSupplier;
   private final Supplier<DescriptionBuilderService> descriptionBuilderServiceSupplier;
@@ -95,6 +95,8 @@ public class GitlabExtension implements ReportPortalExtensionPoint, DisposableBe
   @Autowired
   private BasicTextEncryptor textEncryptor;
   @Autowired
+  private ObjectMapper objectMapper;
+  @Autowired
   @Qualifier("attachmentDataStoreService")
   private DataStoreService dataStoreService;
 
@@ -108,9 +110,8 @@ public class GitlabExtension implements ReportPortalExtensionPoint, DisposableBe
         ));
 
     gitlabClientProviderSupplier = new MemoizingSupplier<>(
-        () -> new GitlabClientProvider(textEncryptor));
-    requestEntityConverter = new RequestEntityConverter(
-        new GitlabObjectMapperProvider().getObjectMapper());
+        () -> new GitlabClientProvider(textEncryptor, objectMapper));
+    requestEntityConverterSupplier = new MemoizingSupplier<>(() -> new RequestEntityConverter(objectMapper));
     descriptionBuilderServiceSupplier = new MemoizingSupplier<>(
         () -> new DescriptionBuilderService(logRepository, testItemRepository, dataStoreService));
   }
@@ -198,7 +199,7 @@ public class GitlabExtension implements ReportPortalExtensionPoint, DisposableBe
     commands.add(new GetIssueFieldsCommand(projectRepository, organizationUserRepository,
         organizationRepository, projectUserRepository));
     commands.add(new PostTicketCommand(projectRepository, gitlabClientProviderSupplier.get(),
-        requestEntityConverter, descriptionBuilderServiceSupplier.get(), organizationUserRepository,
+        requestEntityConverterSupplier.get(), descriptionBuilderServiceSupplier.get(), organizationUserRepository,
         organizationRepository, projectUserRepository));
     return commands.stream().collect(Collectors.toMap(NamedPluginCommand::getName, it -> it));
   }

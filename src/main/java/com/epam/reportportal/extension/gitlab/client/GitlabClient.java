@@ -8,7 +8,6 @@ import com.epam.reportportal.extension.gitlab.dto.MilestoneDto;
 import com.epam.reportportal.extension.gitlab.dto.ProjectDto;
 import com.epam.reportportal.extension.gitlab.dto.UploadsLinkDto;
 import com.epam.reportportal.extension.gitlab.dto.UserDto;
-import com.epam.reportportal.extension.gitlab.utils.GitlabObjectMapperProvider;
 import com.epam.reportportal.base.infrastructure.persistence.entity.attachment.Attachment;
 import com.epam.reportportal.base.infrastructure.rules.exception.ErrorType;
 import com.epam.reportportal.base.infrastructure.rules.exception.ReportPortalException;
@@ -24,6 +23,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import lombok.RequiredArgsConstructor;
 import org.jooq.tools.json.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
@@ -42,6 +42,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @author Zsolt Nagyaghy
  */
 @Slf4j
+@RequiredArgsConstructor
 public class GitlabClient {
 
   private static final Integer DEFAULT_PAGE_SIZE = 100;
@@ -64,12 +65,7 @@ public class GitlabClient {
 
   private final String baseUrl;
   private final String token;
-  ObjectMapper objectMapper = new GitlabObjectMapperProvider().getObjectMapper();
-
-  public GitlabClient(String baseUrl, String token) {
-    this.baseUrl = baseUrl;
-    this.token = token;
-  }
+  private final ObjectMapper objectMapper;
 
   public ProjectDto getProject(String projectId) {
     String pathUrl = String.format(BASE_PATH, baseUrl, projectId);

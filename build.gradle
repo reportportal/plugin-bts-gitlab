@@ -32,8 +32,8 @@ dependencies {
         implementation 'com.epam.reportportal:service-api'
         annotationProcessor 'com.epam.reportportal:service-api'
     } else {
-        implementation 'com.github.reportportal:service-api:0141b9e'
-        annotationProcessor 'com.github.reportportal:service-api:0141b9e'
+        implementation 'com.github.reportportal:service-api:7969602'
+        annotationProcessor 'com.github.reportportal:service-api:7969602'
     }
 
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
