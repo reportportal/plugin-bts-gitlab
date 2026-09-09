@@ -34,6 +34,7 @@ import com.epam.reportportal.base.infrastructure.persistence.dao.organization.Or
 import com.epam.reportportal.base.infrastructure.persistence.dao.organization.OrganizationUserRepository;
 import com.epam.reportportal.base.infrastructure.persistence.entity.integration.Integration;
 import com.epam.reportportal.base.infrastructure.rules.exception.ReportPortalException;
+import com.epam.reportportal.extension.bugtracking.BtsActivityPublisher;
 import com.epam.reportportal.extension.command.AbstractExtensionCommand;
 import com.epam.reportportal.extension.gitlab.client.GitlabClient;
 import com.epam.reportportal.extension.gitlab.client.GitlabClientProvider;
@@ -56,17 +57,20 @@ public class PostTicketCommand extends AbstractExtensionCommand<Ticket> {
   private final GitlabClientProvider gitlabClientProvider;
   private final RequestEntityConverter requestEntityConverter;
   private final DescriptionBuilderService descriptionBuilderService;
+  private final BtsActivityPublisher btsActivityPublisher;
 
   public PostTicketCommand(ProjectRepository projectRepository,
       GitlabClientProvider gitlabClientProvider, RequestEntityConverter requestEntityConverter,
       DescriptionBuilderService descriptionBuilderService,
       OrganizationUserRepository organizationUserRepository,
-      OrganizationRepository organizationRepository, ProjectUserRepository projectUserRepository) {
+      OrganizationRepository organizationRepository, ProjectUserRepository projectUserRepository,
+      BtsActivityPublisher btsActivityPublisher) {
     super(projectRepository, organizationUserRepository, organizationRepository,
         projectUserRepository);
     this.gitlabClientProvider = gitlabClientProvider;
     this.requestEntityConverter = requestEntityConverter;
     this.descriptionBuilderService = descriptionBuilderService;
+    this.btsActivityPublisher = btsActivityPublisher;
   }
 
   @Override
@@ -84,12 +88,15 @@ public class PostTicketCommand extends AbstractExtensionCommand<Ticket> {
         ));
     final GitlabClient gitlabClient = gitlabClientProvider.get(integration.getParams());
     Map<String, String> queryParams = handleTicketFields(ticketRQ, gitlabClient, project);
+    Ticket ticket;
     try {
-      return TicketMapper.toTicket(gitlabClient.postIssue(project, queryParams));
+      ticket = TicketMapper.toTicket(gitlabClient.postIssue(project, queryParams));
     } catch (Exception e) {
       throw new ReportPortalException(UNABLE_INTERACT_WITH_INTEGRATION,
           "Failed to create Gitlab ticket");
     }
+    btsActivityPublisher.publishTicketPostedEvent(ticket, ticketRQ, pluginCommandRq.getContext(), integration);
+    return ticket;
   }
 
   private Map<String, String> handleTicketFields(PostTicketRQ ticketRQ, GitlabClient gitlabClient,
