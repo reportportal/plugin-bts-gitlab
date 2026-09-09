@@ -15,6 +15,7 @@ import com.epam.reportportal.extension.IntegrationGroupEnum;
 import com.epam.reportportal.extension.NamedPluginCommand;
 import com.epam.reportportal.extension.PluginCommand;
 import com.epam.reportportal.extension.ReportPortalExtensionPoint;
+import com.epam.reportportal.extension.bugtracking.BtsActivityPublisher;
 import com.epam.reportportal.extension.command.ExtensionCommand;
 import com.epam.reportportal.extension.common.IntegrationTypeProperties;
 import com.epam.reportportal.extension.gitlab.client.GitlabClientProvider;
@@ -99,6 +100,8 @@ public class GitlabExtension implements ReportPortalExtensionPoint, DisposableBe
   @Autowired
   @Qualifier("attachmentDataStoreService")
   private DataStoreService dataStoreService;
+  @Autowired
+  private BtsActivityPublisher btsActivityPublisher;
 
   public GitlabExtension(Map<String, Object> initParams) {
     resourcesDir = IntegrationTypeProperties.RESOURCES_DIRECTORY.getValue(initParams)
@@ -200,7 +203,7 @@ public class GitlabExtension implements ReportPortalExtensionPoint, DisposableBe
         organizationRepository, projectUserRepository));
     commands.add(new PostTicketCommand(projectRepository, gitlabClientProviderSupplier.get(),
         requestEntityConverterSupplier.get(), descriptionBuilderServiceSupplier.get(), organizationUserRepository,
-        organizationRepository, projectUserRepository));
+        organizationRepository, projectUserRepository, btsActivityPublisher));
     return commands.stream().collect(Collectors.toMap(NamedPluginCommand::getName, it -> it));
   }
 }
