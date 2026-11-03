@@ -4,9 +4,9 @@ import com.epam.reportportal.base.infrastructure.persistence.entity.integration.
 import com.epam.reportportal.base.infrastructure.rules.exception.ErrorType;
 import com.epam.reportportal.base.infrastructure.rules.exception.ReportPortalException;
 import com.epam.reportportal.extension.gitlab.command.GitlabProperties;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.jasypt.util.text.BasicTextEncryptor;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * @author Zsolt Nagyaghy
@@ -15,7 +15,7 @@ import org.jasypt.util.text.BasicTextEncryptor;
 public class GitlabClientProvider {
 
   private final BasicTextEncryptor textEncryptor;
-  private final ObjectMapper objectMapper;
+  private final JsonMapper jsonMapper;
 
   public GitlabClient get(IntegrationParams integrationParams) {
     String credentials = textEncryptor.decrypt(
@@ -27,6 +27,6 @@ public class GitlabClientProvider {
         () -> new ReportPortalException(ErrorType.UNABLE_INTERACT_WITH_INTEGRATION,
             "Url to the GitLab is not specified."
         ));
-    return new GitlabClient(url, credentials, objectMapper);
+    return new GitlabClient(url, credentials, jsonMapper);
   }
 }

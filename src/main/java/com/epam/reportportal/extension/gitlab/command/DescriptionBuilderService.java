@@ -19,8 +19,6 @@ package com.epam.reportportal.extension.gitlab.command;
 import static com.epam.reportportal.base.infrastructure.persistence.commons.EntityUtils.INSTANT_TO_LDT;
 import static java.util.Optional.ofNullable;
 
-import com.epam.reportportal.extension.gitlab.client.GitlabClient;
-import com.epam.reportportal.extension.gitlab.dto.UploadsLinkDto;
 import com.epam.reportportal.base.infrastructure.model.externalsystem.PostTicketRQ;
 import com.epam.reportportal.base.infrastructure.persistence.binary.DataStoreService;
 import com.epam.reportportal.base.infrastructure.persistence.dao.LogRepository;
@@ -30,18 +28,18 @@ import com.epam.reportportal.base.infrastructure.persistence.entity.item.TestIte
 import com.epam.reportportal.base.infrastructure.persistence.entity.log.Log;
 import com.epam.reportportal.base.infrastructure.rules.exception.ErrorType;
 import com.epam.reportportal.base.infrastructure.rules.exception.ReportPortalException;
+import com.epam.reportportal.extension.gitlab.client.GitlabClient;
+import com.epam.reportportal.extension.gitlab.dto.UploadsLinkDto;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.tika.config.TikaConfig;
-import org.apache.tika.mime.MimeTypes;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Provide functionality for building ticket description
@@ -56,14 +54,11 @@ public class DescriptionBuilderService {
   public static final String BACK_LINK_PATTERN = "[Link to defect](%s)%n";
   public static final String COMMENTS_HEADER = "### **Test Item comments:**";
   public static final String CODE = "`";
-  private static final String IMAGE_CONTENT = "image";
-  private static final String IMAGE_HEIGHT_TEMPLATE = "|height=366!";
 
   private final LogRepository logRepository;
   private final TestItemRepository itemRepository;
   private final DataStoreService dataStoreService;
   private final DateTimeFormatter dateFormat;
-  private final MimeTypes mimeRepository;
   private GitlabClient gitlabClient;
   private String projectId;
 
@@ -72,7 +67,6 @@ public class DescriptionBuilderService {
     this.dateFormat = DateTimeFormatter.ofPattern("MM-dd-yyyy HH:mm:ss");
     this.logRepository = logRepository;
     this.itemRepository = itemRepository;
-    this.mimeRepository = TikaConfig.getDefaultConfig().getMimeRepository();
     this.dataStoreService = dataStoreService;
   }
 

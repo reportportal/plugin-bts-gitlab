@@ -36,7 +36,6 @@ import com.epam.reportportal.extension.gitlab.event.plugin.PluginLoadedEventList
 import com.epam.reportportal.extension.gitlab.info.impl.PluginInfoProviderImpl;
 import com.epam.reportportal.extension.gitlab.utils.MemoizingSupplier;
 import com.epam.reportportal.extension.util.RequestEntityConverter;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -53,6 +52,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.context.support.AbstractApplicationContext;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * @author Zsolt Nagyaghy
@@ -96,7 +96,7 @@ public class GitlabExtension implements ReportPortalExtensionPoint, DisposableBe
   @Autowired
   private BasicTextEncryptor textEncryptor;
   @Autowired
-  private ObjectMapper objectMapper;
+  private JsonMapper objectMapper;
   @Autowired
   @Qualifier("attachmentDataStoreService")
   private DataStoreService dataStoreService;
@@ -128,11 +128,14 @@ public class GitlabExtension implements ReportPortalExtensionPoint, DisposableBe
     return params;
   }
 
+  // TODO: remove the two legacy overrides once service-api drops them from ReportPortalExtensionPoint
+  @Deprecated
   @Override
   public PluginCommand<?> getIntegrationCommand(String commandName) {
     return null;
   }
 
+  @Deprecated
   @Override
   public CommonPluginCommand<?> getCommonCommand(String commandName) {
     return null;
