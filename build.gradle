@@ -1,52 +1,49 @@
 plugins {
-    id "io.spring.dependency-management" version "1.1.7"
+    id 'io.spring.dependency-management' version '1.1.7'
     id 'java'
-    id "com.github.node-gradle.node" version "2.2.1"
+    id "com.github.node-gradle.node" version "7.1.0"
+    id 'com.gradleup.shadow' version '9.3.1'
     id "org.jooq.jooq-codegen-gradle" version "3.19.18"
+    id("io.freefair.lombok") version "9.5.0"
 }
 
 apply from: 'project-properties.gradle'
 apply from: 'jooq.gradle'
 apply from: 'ui.gradle'
 
-def scriptsUrl = 'https://raw.githubusercontent.com/reportportal/gradle-scripts/5.14.0'
+def scriptsUrl = 'https://raw.githubusercontent.com/reportportal/gradle-scripts/develop'
 
 apply from: scriptsUrl + '/release-fat.gradle'
 apply from: scriptsUrl + '/signing.gradle'
 
 repositories {
-    mavenCentral { url "https://repo1.maven.org/maven2" }
-    maven { url 'https://jitpack.io' }
-}
+    mavenCentral { url = "https://repo1.maven.org/maven2" }
+    maven { url = "https://build.shibboleth.net/nexus/content/repositories/releases/" }
 
-dependencyManagement {
-    imports {
-        mavenBom(releaseMode ? 'com.epam.reportportal:commons-bom:' + getProperty('bom.version') : 'com.epam.reportportal:commons-bom:5.15.2')
+    if (!releaseMode) {
+        maven { url = 'https://jitpack.io' }
     }
 }
 
 ext['spring-boot.version'] = "${springBootVersion}"
 
 dependencies {
-    implementation 'com.github.reportportal:commons-dao:5.15.4'
-    implementation 'com.github.reportportal:plugin-api:5.15.0'
-    annotationProcessor 'com.github.reportportal:plugin-api:5.15.0'
+    if (releaseMode) {
+        implementation "com.epam.reportportal:service-api:${serviceApiVersion}"
+        annotationProcessor("com.epam.reportportal:service-api:${serviceApiVersion}") {
+            exclude group: 'org.springframework.modulith', module: 'spring-modulith-apt'
+        }
+    } else {
+        implementation 'com.github.reportportal:service-api:73c327819e'
+        annotationProcessor('com.github.reportportal:service-api:73c327819e') {
+            exclude group: 'org.springframework.modulith', module: 'spring-modulith-apt'
+        }
+    }
 
-    // add lombok support
-    compileOnly "org.projectlombok:lombok:${lombokVersion}"
-    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
-    testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
-    testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
-
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
-wrapper {
-    gradleVersion = '8.10.2'
-}
-
-artifacts {
-    archives shadowJar
-}
+assemble.dependsOn shadowJar
 
 sourceSets {
     main {
@@ -98,7 +95,7 @@ shadowJar {
         into("/resources")
     }
     configurations = [project.configurations.compileClasspath]
-    zip64 true
+    zip64 = true
     dependencies {
         include(dependency('javax.servlet:javax.servlet-api:.*'))
     }

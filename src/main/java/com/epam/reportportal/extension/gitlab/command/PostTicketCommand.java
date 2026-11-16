@@ -19,25 +19,29 @@ package com.epam.reportportal.extension.gitlab.command;
 import static com.epam.reportportal.extension.gitlab.command.GetIssueFieldsCommand.ISSUE_TYPE;
 import static com.epam.reportportal.extension.gitlab.command.GetIssueFieldsCommand.LABELS;
 import static com.epam.reportportal.extension.gitlab.command.PredefinedFieldTypes.NAMED_VALUE_FIELDS;
-import static com.epam.reportportal.rules.commons.validation.BusinessRule.expect;
-import static com.epam.reportportal.rules.exception.ErrorType.UNABLE_INTERACT_WITH_INTEGRATION;
-import static com.epam.ta.reportportal.commons.Predicates.isNull;
-import static com.epam.ta.reportportal.commons.Predicates.not;
+import static com.epam.reportportal.base.infrastructure.persistence.commons.Predicates.isNull;
+import static com.epam.reportportal.base.infrastructure.rules.commons.validation.BusinessRule.expect;
+import static com.epam.reportportal.base.infrastructure.rules.exception.ErrorType.UNABLE_INTERACT_WITH_INTEGRATION;
+import static java.util.function.Predicate.not;
 
-import com.epam.reportportal.extension.ProjectMemberCommand;
+import com.epam.reportportal.api.model.PluginCommandRQ;
+import com.epam.reportportal.base.infrastructure.model.externalsystem.PostFormField;
+import com.epam.reportportal.base.infrastructure.model.externalsystem.PostTicketRQ;
+import com.epam.reportportal.base.infrastructure.model.externalsystem.Ticket;
+import com.epam.reportportal.base.infrastructure.persistence.dao.ProjectRepository;
+import com.epam.reportportal.base.infrastructure.persistence.dao.ProjectUserRepository;
+import com.epam.reportportal.base.infrastructure.persistence.dao.organization.OrganizationRepository;
+import com.epam.reportportal.base.infrastructure.persistence.dao.organization.OrganizationUserRepository;
+import com.epam.reportportal.base.infrastructure.persistence.entity.integration.Integration;
+import com.epam.reportportal.base.infrastructure.rules.exception.ReportPortalException;
+import com.epam.reportportal.extension.bugtracking.BtsActivityPublisher;
+import com.epam.reportportal.extension.command.AbstractExtensionCommand;
 import com.epam.reportportal.extension.gitlab.client.GitlabClient;
 import com.epam.reportportal.extension.gitlab.client.GitlabClientProvider;
 import com.epam.reportportal.extension.gitlab.utils.TicketMapper;
 import com.epam.reportportal.extension.util.CommandParamUtils;
 import com.epam.reportportal.extension.util.RequestEntityConverter;
 import com.epam.reportportal.extension.util.RequestEntityValidator;
-import com.epam.reportportal.model.externalsystem.PostFormField;
-import com.epam.reportportal.model.externalsystem.PostTicketRQ;
-import com.epam.reportportal.model.externalsystem.Ticket;
-import com.epam.reportportal.rules.exception.ErrorType;
-import com.epam.reportportal.rules.exception.ReportPortalException;
-import com.epam.ta.reportportal.dao.ProjectRepository;
-import com.epam.ta.reportportal.entity.integration.Integration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -48,25 +52,31 @@ import org.springframework.util.CollectionUtils;
 /**
  * @author <a href="mailto:pavel_bortnik@epam.com">Pavel Bortnik</a>
  */
-public class PostTicketCommand extends ProjectMemberCommand<Ticket> {
+public class PostTicketCommand extends AbstractExtensionCommand<Ticket> {
 
   private final GitlabClientProvider gitlabClientProvider;
   private final RequestEntityConverter requestEntityConverter;
   private final DescriptionBuilderService descriptionBuilderService;
+  private final BtsActivityPublisher btsActivityPublisher;
 
   public PostTicketCommand(ProjectRepository projectRepository,
       GitlabClientProvider gitlabClientProvider, RequestEntityConverter requestEntityConverter,
-      DescriptionBuilderService descriptionBuilderService) {
-    super(projectRepository);
+      DescriptionBuilderService descriptionBuilderService,
+      OrganizationUserRepository organizationUserRepository,
+      OrganizationRepository organizationRepository, ProjectUserRepository projectUserRepository,
+      BtsActivityPublisher btsActivityPublisher) {
+    super(projectRepository, organizationUserRepository, organizationRepository,
+        projectUserRepository);
     this.gitlabClientProvider = gitlabClientProvider;
     this.requestEntityConverter = requestEntityConverter;
     this.descriptionBuilderService = descriptionBuilderService;
+    this.btsActivityPublisher = btsActivityPublisher;
   }
 
   @Override
-  protected Ticket invokeCommand(Integration integration, Map<String, Object> params) {
-    PostTicketRQ ticketRQ = requestEntityConverter.getEntity(CommandParamUtils.ENTITY_PARAM, params,
-        PostTicketRQ.class
+  protected Ticket invokeCommand(Integration integration, PluginCommandRQ pluginCommandRq) {
+    PostTicketRQ ticketRQ = requestEntityConverter.getEntity(CommandParamUtils.ENTITY_PARAM,
+        pluginCommandRq.getArguments(), PostTicketRQ.class
     );
     RequestEntityValidator.validate(ticketRQ);
     expect(ticketRQ.getFields(), not(isNull())).verify(UNABLE_INTERACT_WITH_INTEGRATION,
@@ -78,11 +88,15 @@ public class PostTicketCommand extends ProjectMemberCommand<Ticket> {
         ));
     final GitlabClient gitlabClient = gitlabClientProvider.get(integration.getParams());
     Map<String, String> queryParams = handleTicketFields(ticketRQ, gitlabClient, project);
+    Ticket ticket;
     try {
-      return TicketMapper.toTicket(gitlabClient.postIssue(project, queryParams));
+      ticket = TicketMapper.toTicket(gitlabClient.postIssue(project, queryParams));
     } catch (Exception e) {
-      throw new ReportPortalException(UNABLE_INTERACT_WITH_INTEGRATION, "Failed to create Gitlab ticket");
+      throw new ReportPortalException(UNABLE_INTERACT_WITH_INTEGRATION,
+          "Failed to create Gitlab ticket");
     }
+    btsActivityPublisher.publishTicketPostedEvent(ticket, ticketRQ, pluginCommandRq.getContext(), integration);
+    return ticket;
   }
 
   private Map<String, String> handleTicketFields(PostTicketRQ ticketRQ, GitlabClient gitlabClient,
@@ -97,8 +111,7 @@ public class PostTicketCommand extends ProjectMemberCommand<Ticket> {
         String extended = Optional.ofNullable(
                 descriptionBuilderService.getDescription(ticketRQ, gitlabClient, gitlabProjectId))
             .orElse("");
-        String extendedDescription = description + "\n" + extended;
-        params.put(field.getId(), extendedDescription);
+        params.put(field.getId(), description + "\n" + extended);
         continue;
       }
       if (NAMED_VALUE_FIELDS.contains(field.getFieldType())) {
