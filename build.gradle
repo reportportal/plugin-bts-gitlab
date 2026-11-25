@@ -65,7 +65,31 @@ test {
 
 generatePomFileForShadowPublication { pom.packaging = "jar" }
 
+tasks.register('generateMarketplaceManifest') {
+    def outputDir = layout.buildDirectory.dir('generated/marketplace')
+    def manifest = [
+            id           : pluginId.toString().trim(),
+            name         : 'GitLab',
+            version      : project.version.toString(),
+            description  : 'Post defects from ReportPortal to GitLab issues and link existing issues to test results.',
+            author       : [name: 'EPAM ReportPortal', email: 'support@reportportal.io'],
+            license      : 'Apache-2.0',
+            category     : 'bug-tracking',
+            compatibility: [reportportal: '>=25.1'],
+            homepage     : 'https://github.com/reportportal/plugin-bts-gitlab',
+            access       : 'public',
+    ]
+    inputs.property('manifest', manifest)
+    outputs.dir(outputDir)
+    doLast {
+        def file = outputDir.get().file('marketplace-manifest.json').asFile
+        file.parentFile.mkdirs()
+        file.setText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(manifest)) + '\n', 'UTF-8')
+    }
+}
+
 jar {
+    from(tasks.named('generateMarketplaceManifest'))
     from("src/main/resources") {
         into("/resources")
     }
@@ -85,6 +109,7 @@ jar {
 }
 
 shadowJar {
+    from(tasks.named('generateMarketplaceManifest'))
     from("src/main/resources") {
         into("/resources")
     }

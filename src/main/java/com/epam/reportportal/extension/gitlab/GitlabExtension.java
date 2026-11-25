@@ -61,7 +61,7 @@ import tools.jackson.databind.json.JsonMapper;
 public class GitlabExtension implements ReportPortalExtensionPoint, DisposableBean {
 
   public static final String BINARY_DATA_PROPERTIES_FILE_ID = "binary-data.properties";
-  private static final String PLUGIN_ID = "GitLab";
+  private static final String PLUGIN_ID = "plugin-bts-gitlab";
   private static final String DOCUMENTATION_LINK_FIELD = "documentationLink";
   private static final String DOCUMENTATION_LINK = "https://reportportal.io/docs/plugins/GitLab/";
   private final String resourcesDir;
